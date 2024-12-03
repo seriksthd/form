@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login and Registration</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f7fc;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .container {
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 400px;
+        max-width: 100%;
+      }
+
+      h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+
+      label {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 5px;
+      }
+
+      input {
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        outline: none;
+        transition: border 0.3s;
+      }
+
+      input:focus {
+        border-color: #007bff;
+      }
+
+      button {
+        padding: 12px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .switch-form {
+        text-align: center;
+        margin-top: 10px;
+      }
+
+      .switch-form a {
+        color: #007bff;
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .switch-form a:hover {
+        text-decoration: underline;
+      }
+      .form-group{
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" id="loginEmail" name="email" required /><br />
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="loginPassword" name="password" required /><br />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+
+      <div class="switch-form">
+        <p>Don't have an account? <a href="#" id="showRegisterForm">Register here</a></p>
+      </div>
+
+      <h2 style="display: none;" id="registerHeader">Registration</h2>
+      <form id="registerForm" style="display: none;">
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" id="registerUsername" name="username" required /><br />
+        </div>
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" id="registerEmail" name="email" required /><br />
+        </div>
+        <div class="form-group">
+          <label for="password">Password (min 8 characters):</label>
+          <input type="password" id="registerPassword" name="password" required /><br />
+        </div>
+        <button type="submit">Register</button>
+      </form>
+
+      <div class="switch-form" style="display: none;" id="showLoginLink">
+        <p>Already have an account? <a href="#" id="showLoginForm">Login here</a></p>
+      </div>
+    </div>
+
+    <script>
+
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+
+      const minPasswordLength = 8;
+
+
+      document.getElementById("loginForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        try {
+          const response = await fetch("http://localhost:3000/users");
+          const users = await response.json();
+
+          const user = users.find((u) => u.email === email && u.password === password);
+
+          if (user) {
+            alert("Login successful!");
+            localStorage.setItem("user", JSON.stringify(user));
+            window.location.href = "index2.html";
+          } else {
+            alert("Invalid email or password");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Something went wrong!");
+        }
+      });
+
+
+      document.getElementById("registerForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const username = document.getElementById("registerUsername").value;
+        const email = document.getElementById("registerEmail").value;
+        const password = document.getElementById("registerPassword").value;
+
+        if (!emailRegex.test(email)) {
+          alert("Please enter a valid email address ending with @gmail.com");
+          return;
+        }
+
+        if (password.length < minPasswordLength) {
+          alert(`Password must be at least ${minPasswordLength} characters long.`);
+          return;
+        }
+
+        try {
+          const response = await fetch("http://localhost:3000/users");
+          const users = await response.json();
+
+          const existingUser = users.find((u) => u.email === email);
+
+          if (existingUser) {
+            alert("Email is already taken!");
+            return;
+          }
+
+
+          const newUser = {
+            username: username,
+            email: email,
+            password: password,
+          };
+
+
+          const postResponse = await fetch("http://localhost:3000/users", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newUser),
+          });
+
+          if (postResponse.ok) {
+            alert("Registration successful!");
+
+            const newUserData = await postResponse.json();
+            localStorage.setItem("user", JSON.stringify(newUserData));
+          } else {
+            alert("Registration failed!");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Something went wrong!");
+        }
+      });
+
+      document.getElementById("showRegisterForm").addEventListener("click", function () {
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("registerForm").style.display = "block";
+        document.getElementById("registerHeader").style.display = "block";
+        document.getElementById("showLoginLink").style.display = "block";
+      });
+
+      document.getElementById("showLoginForm").addEventListener("click", function () {
+        document.getElementById("loginForm").style.display = "block";
+        document.getElementById("registerForm").style.display = "none";
+        document.getElementById("registerHeader").style.display = "none";
+        document.getElementById("showLoginLink").style.display = "none";
+      });
+    </script>
+  </body>
+</html>
